@@ -31,6 +31,26 @@ const ReservationsList = () => {
         });
     }
 
+    const onDeleteClick = (id) => {
+        const confirm = window.confirm('¿Está seguro de eliminar el registro?');
+        if (!confirm) {
+            return;
+        }
+        axios.delete('http://127.0.0.1:8000/api/reservations/' + id, {
+            headers: {
+                'Authorization': ` ${localStorage.getItem('token')}`
+            }
+        })
+            .then(() => {
+                fetchListaReservations(localStorage.getItem('client_id'));
+            }).catch((error) => {
+            console.log(error);
+            if (error.response.status === 401) {
+                navigate('/clients/login');
+            }
+        });
+    }
+
     return (<>
         <Menu/>
         <Container>
@@ -147,6 +167,13 @@ const ReservationsList = () => {
                                                                 {item.costo_total}
                                                             </h1>
                                                         </Badge>
+                                                    </td>
+                                                    <td className="d-flex">
+                                                        <button className="btn btn-danger w-100" onClick={() => {
+                                                            onDeleteClick(item.id)
+                                                        }}>
+                                                            Eliminar
+                                                        </button>
                                                     </td>
                                                 </Card>
                                             </tr>

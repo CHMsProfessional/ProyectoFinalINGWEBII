@@ -16,6 +16,7 @@ const Welcome = () => {
     const [uniqueCities, setUniqueCities] = useState([]);
     const [premiseList, setPremiseList] = useState([]);
 
+
     useEffect(() => {
         fetchListaPremises();
     }, []);

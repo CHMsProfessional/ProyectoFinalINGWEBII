@@ -97,7 +97,6 @@ const PremiseOwnerList = () => {
                                                 :
                                                 <Alert variant="success"> No </Alert>}
                                         </td>
-                                        {!item.reservations.length > 0  && <>
                                         <td>
                                             <button className="btn btn-primary" onClick={() => {
                                                 onEditClick(item.id);
@@ -105,6 +104,7 @@ const PremiseOwnerList = () => {
                                                 Editar
                                             </button>
                                         </td>
+                                        {!item.reservations.length > 0  && <>
                                         <td>
                                             <button className="btn btn-danger" onClick={() => {
                                                 onDeleteClick(item.id)

@@ -8,7 +8,14 @@ import {Map, InfoWindow, Marker, GoogleApiWrapper} from 'google-maps-react';
 
 const PremiseList = ({google}) => {
     const navigate = useNavigate();
+
     const [premiseList, setPremiseList] = useState([]);
+    const sortedPremiseList = [...premiseList].sort((a, b) => b.precio_por_noche - a.precio_por_noche);
+
+    const [filteredPremiseList, setFilteredPremiseList] = useState([]);
+    const sortedFilteredPremiseList = [...filteredPremiseList].sort((a, b) => b.precio_por_noche - a.precio_por_noche);
+
+
     const [showInfoWindow, setShowInfoWindow] = useState(false);
     const [activeMarker, setActiveMarker] = useState(null);
     const [filterCantidadHabitaciones, setFilterCantidadHabitaciones] = useState(0);
@@ -17,13 +24,19 @@ const PremiseList = ({google}) => {
     const [filterCantidadPersonas, setFilterCantidadPersonas] = useState(0);
     const [filterWifi, setFilterWifi] = useState(false);
     const [filterTipoPropiedad, setFilterTipoPropiedad] = useState('');
-    const [filterPrecioPorNoche, setFilterPrecioPorNoche] = useState(0);
+    const [filterPrecioPorNocheMax, setFilterPrecioPorNocheMax] = useState(0);
+    const [filterPrecioPorNocheMin, setFilterPrecioPorNocheMin] = useState(0);
     const [filterCiudad, setFilterCiudad] = useState('');
-    const [filteredPremiseList, setFilteredPremiseList] = useState([]);
     const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [uniqueCities, setUniqueCities] = useState([]);
     const [selectedPremise, setSelectedPremise] = useState(null);
     const [mapCenter, setMapCenter] = useState({ lat: -17.783482, lng: -63.181837 });
+
+    const searchParams = new URLSearchParams(location.search);
+    const urlFilterCantidadPersonas = parseInt(searchParams.get("cantidadPersonas")) || 0;
+    const urlFilterCiudad = searchParams.get("ciudad") || '';
+    const urlFechaEntrada = searchParams.get("fechaEntrada") || '';
+    const urlFechaSalida = searchParams.get("fechaSalida") || '';
     const onMarkerClick = (props, marker, e) => {
         console.log('onMarkerClick');
         setActiveMarker(marker);
@@ -38,7 +51,15 @@ const PremiseList = ({google}) => {
 
     useEffect(() => {
         fetchListaPremises();
-    }, [filterCantidadHabitaciones, filterCantidadCamas, filterCantidadBanos, filterCantidadPersonas, filterWifi, filterTipoPropiedad, filterPrecioPorNoche, filterCiudad]);
+        if (urlFilterCantidadPersonas > 0) {
+            setFilterCantidadPersonas(urlFilterCantidadPersonas);
+            applyFilters()
+        }
+        if (urlFilterCiudad !== '') {
+            setFilterCiudad(urlFilterCiudad);
+            applyFilters()
+        }
+    }, [filterCantidadHabitaciones, filterCantidadCamas, filterCantidadBanos, filterCantidadPersonas, filterWifi, filterTipoPropiedad, filterPrecioPorNocheMax, filterCiudad]);
 
     const fetchListaPremises = () => {
         axios.get('http://localhost:8000/api/premises/', {
@@ -65,22 +86,28 @@ const PremiseList = ({google}) => {
             if (filterCantidadHabitaciones > 0 && premise.cantidad_habitaciones !== filterCantidadHabitaciones) {
                 return false;
             }
-            if (filterCantidadCamas > 0 && premise.cantidad_camas >= filterCantidadCamas) {
+            if (filterCantidadCamas > 0 && premise.cantidad_camas < filterCantidadCamas) {
                 return false;
             }
-            if (filterCantidadBanos > 0 && premise.cantidad_banos >= filterCantidadBanos) {
+
+            if (filterCantidadBanos > 0 && premise.cantidad_banos < filterCantidadBanos) {
                 return false;
             }
-            if (filterCantidadPersonas > 0 && premise.cantidad_personas >= filterCantidadPersonas) {
+
+            if (filterCantidadPersonas > 0 && premise.cantidad_personas < filterCantidadPersonas) {
                 return false;
             }
+
             if (filterWifi && !premise.tiene_wifi) {
                 return false;
             }
             if (filterTipoPropiedad !== '' && premise.tipo_propiedad !== filterTipoPropiedad) {
                 return false;
             }
-            if (filterPrecioPorNoche > 0 && premise.precio_por_noche > filterPrecioPorNoche) {
+            if (
+                (filterPrecioPorNocheMin > 0 && premise.precio_por_noche < filterPrecioPorNocheMin) ||
+                (filterPrecioPorNocheMax > 0 && premise.precio_por_noche > filterPrecioPorNocheMax)
+            ) {
                 return false;
             }
             return !(filterCiudad !== '' && premise.ubicacion_ciudad !== filterCiudad);
@@ -135,11 +162,30 @@ const PremiseList = ({google}) => {
                             </Form.Control>
                         </Form.Group>
 
-                        <Form.Group controlId="filterPrecioPorNoche">
-                            <Form.Label>Precio por Noche:</Form.Label>
+                        <Form.Group controlId="filterPrecioPorNocheMax">
+                            <Form.Label>Precio por Noche MAX:</Form.Label>
                             <Form.Control type="number"
-                                          onChange={(e) => setFilterPrecioPorNoche(parseInt(e.target.value))}/>
+                                          onChange={(e) => setFilterPrecioPorNocheMax(parseInt(e.target.value))}/>
                         </Form.Group>
+
+                        <Form.Group controlId="filterPrecioPorNocheMin">
+                            <Form.Label>Precio por Noche MIN:</Form.Label>
+                            <Form.Control type="number"
+                                            onChange={(e) => setFilterPrecioPorNocheMin(parseInt(e.target.value))}/>
+                        </Form.Group>
+
+                        <Form.Group controlId="filterCantidadPersonas">
+                            <Form.Label>Cantidad de Personas:</Form.Label>
+                            <Form.Control type="number"
+                                            onChange={(e) => setFilterCantidadPersonas(parseInt(e.target.value))}/>
+                        </Form.Group>
+
+                        <Form.Group controlId="filterCantidadBanos">
+                            <Form.Label>Cantidad de Baños:</Form.Label>
+                            <Form.Control type="number"
+                                            onChange={(e) => setFilterCantidadBanos(parseInt(e.target.value))}/>
+                        </Form.Group>
+
 
                         <Form.Group controlId="filterTipoPropiedad">
                             <Form.Label>Tipo de Propiedad:</Form.Label>
@@ -159,6 +205,12 @@ const PremiseList = ({google}) => {
                             <Form.Label>Cantidad de Habitaciones:</Form.Label>
                             <Form.Control type="number"
                                           onChange={(e) => setFilterCantidadHabitaciones(parseInt(e.target.value))}/>
+                        </Form.Group>
+
+                        <Form.Group controlId="filterCantidadCamas">
+                            <Form.Label>Cantidad de Camas:</Form.Label>
+                            <Form.Control type="number"
+                                            onChange={(e) => setFilterCantidadCamas(parseInt(e.target.value))}/>
                         </Form.Group>
 
 
@@ -189,15 +241,17 @@ const PremiseList = ({google}) => {
                                         <th></th>
                                         <th>Titulo</th>
                                         <th>Ciudad</th>
-                                        <th>Descripcion</th>
                                         <th>Tipo de Alojamiento</th>
-                                        <th>Propietario</th>
+                                        <th>Precio por noche</th>
+                                        <th>Tiene Wifi?</th>
+                                        <th>Cantidad de Camas</th>
+                                        <th>Capacidad</th>
                                         <th></th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     {isFilterApplied ? (
-                                        filteredPremiseList.map(item =>
+                                        sortedFilteredPremiseList.map(item =>
                                             <tr key={"tr" + item.id}>
                                                 <td>
                                                     <img style={{maxHeight: '100px'}}
@@ -205,9 +259,11 @@ const PremiseList = ({google}) => {
                                                 </td>
                                                 <td>{item.titulo}</td>
                                                 <td className="d-flex">{item.ubicacion_ciudad}</td>
-                                                <td>{item.descripcion}</td>
                                                 <td>{getTipoForDisplay(item.tipo_propiedad)}</td>
-                                                <td>{item.client.nombre} {item.client.apellido}</td>
+                                                <td>{item.precio_por_noche}</td>
+                                                <td>{item.tiene_wifi ? 'Si' : 'No'}</td>
+                                                <td>{item.cantidad_camas}</td>
+                                                <td>{item.max_personas}</td>
                                                 <td>
                                                     <button className="btn btn-primary" onClick={() => {
                                                         onSelectClick(item.id);
@@ -218,17 +274,19 @@ const PremiseList = ({google}) => {
                                             </tr>
                                         )
                                     ) : (
-                                        premiseList.map(item =>
+                                        sortedPremiseList.map(item =>
                                             <tr key={"tr" + item.id}>
                                                 <td>
                                                     <img style={{maxHeight: '100px'}}
                                                          src={"http://localhost:8000/uploads/premises/" + item.id + ".jpg"}/>
                                                 </td>
                                                 <td>{item.titulo}</td>
-                                                <td>{item.ubicacion_ciudad}</td>
-                                                <td >{item.descripcion}</td>
+                                                <td className="d-flex">{item.ubicacion_ciudad}</td>
                                                 <td>{getTipoForDisplay(item.tipo_propiedad)}</td>
-                                                <td>{item.client.nombre} {item.client.apellido}</td>
+                                                <td>{item.precio_por_noche}</td>
+                                                <td>{item.tiene_wifi ? 'Si' : 'No'}</td>
+                                                <td>{item.cantidad_camas}</td>
+                                                <td>{item.max_personas}</td>
                                                 <td>
                                                     <button className="btn btn-primary" onClick={() => {
                                                         onSelectClick(item.id);
@@ -296,7 +354,9 @@ const PremiseList = ({google}) => {
                                                     <h1>{selectedPremise.title}</h1>
                                                     <div>
                                                         <img className='imgInfoWindow' src={"http://localhost:8000/uploads/premises/" + selectedPremise.id + ".jpg"} alt="Info Window" />
-                                                        " alt="Info Window" />
+                                                    </div>
+                                                    <div>
+                                                        <a href={`/premises/${selectedPremise.id}`}>Seleccionar Alojamiento</a>
                                                     </div>
                                                 </div>
                                             )}

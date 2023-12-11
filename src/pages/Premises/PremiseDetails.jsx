@@ -27,11 +27,17 @@ const PremiseDetails = () => {
     const [tipoPremise, setTipoPremise] = useState("");
     const [cantidad_habitaciones, setCantidad_habitaciones] = useState("");
     const [cantidad_banos, setCantidad_banos] = useState("");
+    const [cantidad_camas, setCantidad_camas] = useState("");
+    const [tiene_wifi, setTiene_wifi] = useState(false);
     const [capacidad, setCapacidad] = useState("");
     const [precioPerNight, setPrecioPerNight] = useState(0);
     const [ciudad, setCiudad] = useState("");
     const [tarifa_limpieza, setTarifa_limpieza] = useState(0);
     const [tarifa_airbnbnt, setTarifa_airbnbnt] = useState(20);
+    const [tarjeta_credito, setTarjeta_credito] = useState(0);
+    const [nombre_titular_tarjeta, setNombre_titular_tarjeta] = useState("");
+    const [fecha_vencimiento_tarjeta, setFecha_vencimiento_tarjeta] = useState("");
+    const [codigo_seguridad_tarjeta, setCodigo_seguridad_tarjeta] = useState("");
 
     const [cantidad_noches, setCantidad_noches] = useState(0);
     const [fecha_inicio, setFecha_inicio] = useState("");
@@ -61,15 +67,21 @@ const PremiseDetails = () => {
         if (!isValid) {
             return;
         }
+        calcularCostoTotal();
         doInsert();
     }
     const doInsert = () => {
+
         axios.post('http://127.0.0.1:8000/api/reservations', {
             premises_id: id,
             client_id: localStorage.getItem('client_id'),
             cantidad_noches: cantidad_noches,
             fecha_inicio: fecha_inicio,
             fecha_final: fecha_final,
+            tarjeta_credito: tarjeta_credito,
+            nombre_titular_tarjeta: nombre_titular_tarjeta,
+            fecha_vencimiento_tarjeta: fecha_vencimiento_tarjeta,
+            codigo_seguridad_tarjeta: codigo_seguridad_tarjeta,
             tarifa_airbnb: tarifa_airbnbnt,
             costo_total: costo_total
         }, {
@@ -100,6 +112,8 @@ const PremiseDetails = () => {
                 setTitulo(response.data.titulo);
                 setDescripcion(response.data.descripcion);
                 setTipoPremise(response.data.tipo_propiedad);
+                setCantidad_camas(response.data.cantidad_camas);
+                setTiene_wifi(response.data.tiene_wifi)
                 setCantidad_habitaciones(response.data.cantidad_habitaciones);
                 setCantidad_banos(response.data.cantidad_banos);
                 setCapacidad(response.data.max_personas);
@@ -163,7 +177,7 @@ const PremiseDetails = () => {
                                     </h1>
                                 </CardTitle>
                                 <Card>
-                                    <Card.Img variant="top" src=""/>
+                                    <Card.Img variant="top" src={`http://localhost:8000/uploads/premises/${id}.jpg`}/>
                                     <Card.Body>
                                         <Card.Title>Descripcion</Card.Title>
                                         <Card.Text>
@@ -180,6 +194,14 @@ const PremiseDetails = () => {
                                         <Card.Title>Cantidad de Baños</Card.Title>
                                         <Card.Text>
                                             {cantidad_banos}
+                                        </Card.Text>
+                                        <Card.Title>Cantidad de Camas</Card.Title>
+                                        <Card.Text>
+                                            {cantidad_camas}
+                                        </Card.Text>
+                                        <Card.Title>Tiene Wifi</Card.Title>
+                                        <Card.Text>
+                                            {tiene_wifi ? "Si" : "No"}
                                         </Card.Text>
                                         <Card.Title>Capacidad</Card.Title>
                                         <Card.Text>
@@ -233,6 +255,48 @@ const PremiseDetails = () => {
                                             Elije una Fecha Final
                                         </Form.Control.Feedback>
                                     </div>
+                                    <div>
+                                        <FormLabel>Tarjeta de Crédito</FormLabel>
+                                        <FormControl required type="number" value={tarjeta_credito}
+                                                        onChange={(e) => {
+                                                            setTarjeta_credito(e.target.value);
+                                                        }}/>
+                                        <Form.Control.Feedback type="invalid">
+                                            Ingresa una Tarjeta de Crédito
+                                        </Form.Control.Feedback>
+                                    </div>
+                                    <div>
+                                        <FormLabel>Nombre del Titular de la Tarjeta</FormLabel>
+                                        <FormControl required type="text" value={nombre_titular_tarjeta}
+                                                        onChange={(e) => {
+                                                            setNombre_titular_tarjeta(e.target.value);
+                                                        }}/>
+                                        <Form.Control.Feedback type="invalid">
+                                            Ingresa el Nombre del Titular de la Tarjeta
+                                        </Form.Control.Feedback>
+                                    </div>
+                                    <div>
+                                        <FormLabel>Fecha de Vencimiento de la Tarjeta</FormLabel>
+                                        <FormControl required type="date" value={fecha_vencimiento_tarjeta}
+                                                        onChange={(e) => {
+                                                            setFecha_vencimiento_tarjeta(e.target.value);
+                                                        }}/>
+                                        <Form.Control.Feedback type="invalid">
+                                            Ingresa la Fecha de Vencimiento de la Tarjeta
+                                        </Form.Control.Feedback>
+                                    </div>
+                                    <div>
+                                        <FormLabel>Código de Seguridad de la Tarjeta</FormLabel>
+                                        <FormControl required type="number" value={codigo_seguridad_tarjeta}
+                                                        onChange={(e) => {
+                                                            setCodigo_seguridad_tarjeta(e.target.value);
+                                                        }
+                                                        }/>
+                                        <Form.Control.Feedback type="invalid">
+                                            Ingresa el Código de Seguridad de la Tarjeta
+                                        </Form.Control.Feedback>
+                                    </div>
+
                                     {renderToast(errorMessage)}
                                     <Alert className="mt-3" variant="info">
                                         El costo total es de: {costo_total} <br/>

@@ -1,4 +1,4 @@
-import {Container, Nav, Navbar, NavDropdown, NavLink} from "react-bootstrap";
+import {Button, Col, Container, Form, Nav, Navbar, NavDropdown, NavLink, Row} from "react-bootstrap";
 import {Link, useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 
@@ -9,6 +9,7 @@ const Menu = () => {
     const [propietario, setPropietario] = useState(false);
     const [client_id, setClient_id] = useState(-1);
     const paginasSinSesion = ['/clients/login', '/clients/register', '/', '/premises/list'];
+    const [busquedaAvanzada, setBusquedaAvanzada] = useState(false);
 
     const onCerrarSesionClick = () => {
         localStorage.removeItem('token');
@@ -17,6 +18,13 @@ const Menu = () => {
         localStorage.removeItem('client_id');
         navigate('/clients/login');
     }
+    const [searchValues, setSearchValues] = useState({
+        ciudad: '',
+        fechaEntrada: '',
+        fechaSalida: '',
+        Adultos: 0,
+        Niños: 0,
+    });
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -39,6 +47,13 @@ const Menu = () => {
             // fetchUserInfo();
         }
     }, [])
+    const handleSimpleSearch = () => {
+        navigate(`/premises/list?ciudad=${searchValues.ciudad}`);
+    };
+
+    const handleAdvancedSearch = () => {
+        navigate(`/premises/list?ciudad=${searchValues.ciudad}&fechaEntrada=${searchValues.fechaEntrada}&fechaSalida=${searchValues.fechaSalida}&cantidadPersonas=${(parseInt(searchValues.Adultos) || 0) + (parseInt(searchValues.Niños) || 0)}`);
+    };
 
     return <Navbar  bg="dark" data-bs-theme="dark" expand="lg" className="bg-body-tertiary">
         <Container>
@@ -66,6 +81,89 @@ const Menu = () => {
                         <Link to={`/reservations/${client_id}`} className="dropdown-item">Lista de tus Reservas</Link>
                         <button className="dropdown-item text-start" onClick={onCerrarSesionClick}>Cerrar sesión</button>
                     </NavDropdown>}
+                    <Form.Check
+                        className={"m-2 text-center text-white"}
+                        type="checkbox"
+                        id="busquedaAvanzadaCheckbox"
+                        label="Búsqueda Avanzada"
+                        checked={busquedaAvanzada}
+                        onChange={() => setBusquedaAvanzada(!busquedaAvanzada)}
+                    />
+                    {busquedaAvanzada ? (
+                        <Form inline>
+                            <Row>
+                                <Col xs="auto">
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Ciudad"
+                                        className="mr-sm-2"
+                                        value={searchValues.ciudad}
+                                        onChange={(e) => setSearchValues({ ...searchValues, ciudad: e.target.value })}
+                                    />
+                                </Col>
+                                <Col xs="auto">
+                                    <Form.Control
+                                        type="date"
+                                        placeholder="Fecha de entrada"
+                                        className="mr-sm-2"
+                                        value={searchValues.fechaEntrada}
+                                        onChange={(e) => setSearchValues({ ...searchValues, fechaEntrada: e.target.value })}
+                                    />
+                                </Col>
+                                <Col xs="auto">
+                                    <Form.Control
+                                        type="date"
+                                        placeholder="Fecha de salida"
+                                        className="mr-sm-2"
+                                        value={searchValues.fechaSalida}
+                                        onChange={(e) => setSearchValues({ ...searchValues, fechaSalida: e.target.value })}
+                                    />
+                                </Col>
+                                <Col xs="auto">
+                                    <Form.Control
+                                        type="number"
+                                        placeholder="Adultos"
+                                        className="mr-sm-2"
+                                        value={searchValues.Adultos}
+                                        onChange={(e) => setSearchValues({ ...searchValues, Adultos: e.target.value })}
+                                    />
+                                </Col>
+                                <Col xs="auto">
+                                    <Form.Control
+                                        type="number"
+                                        placeholder="Niños"
+                                        className="mr-sm-2"
+                                        value={searchValues.Niños}
+                                        onChange={(e) => setSearchValues({ ...searchValues, Niños: e.target.value })}
+                                    />
+                                </Col>
+                                <Col xs="auto">
+                                    <Button type="submit" onClick={handleAdvancedSearch}>
+                                        Buscar
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Form>
+                    ) : (
+                        <Form inline>
+                            <Row>
+                                <Col xs="auto">
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Ciudad"
+                                        className="mr-sm-2"
+                                        value={searchValues.ciudad}
+                                        onChange={(e) => setSearchValues({ ...searchValues, ciudad: e.target.value })}
+                                    />
+                                </Col>
+                                <Col xs="auto">
+                                    <Button type="submit" onClick={handleSimpleSearch}>
+                                        Buscar
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Form>
+                    )}
                 </Nav>
             </Navbar.Collapse>
         </Container>
